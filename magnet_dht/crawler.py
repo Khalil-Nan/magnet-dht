@@ -82,6 +82,8 @@ class DHTServer:
         # redis 客户端
         self.rc = RedisClient()
         self.logger = get_logger("logger_{}".format(bind_port))
+        self.magnet_counter = {}  # 磁力链接计数器
+        self.save_threshold = 2   # 保存阈值（出现3次再保存）
 
     def bootstrap(self):
         """
@@ -174,10 +176,18 @@ class DHTServer:
         """
         # 使用 codecs 解码 info_hash
         hex_info_hash = codecs.getencoder("hex")(info_hash)[0].decode()
-        magnet = MAGNET_PER.format(hex_info_hash)
-        self.rc.add_magnet(magnet)
-        # self.logger.info("pid " + str(self.process_id) + " - " + magnet)
-        self.logger.info("pid_{0} - {1}".format(self.process_id, magnet))
+        
+            # 计数逻辑
+        if hex_info_hash in self.magnet_counter:
+            self.magnet_counter[hex_info_hash] += 1
+        else:
+            self.magnet_counter[hex_info_hash] = 1
+        
+        # 达到阈值再保存
+        if self.magnet_counter[hex_info_hash] == self.save_threshold:
+            magnet = MAGNET_PER.format(hex_info_hash)
+            self.rc.add_magnet(magnet)
+            self.logger.info(f"pid_{self.process_id} - 出现{self.save_threshold}次 - {magnet}")
 
     def on_message(self, msg, address):
         """

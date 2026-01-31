@@ -6,8 +6,8 @@ import json
 
 from .database import RedisClient
 
-SAVE_PATH = ".\\torrents"
-STOP_TIMEOUT = 60
+SAVE_PATH = "D:\\github\\torrent"
+STOP_TIMEOUT = 120
 MAX_CONCURRENT = 16
 MAX_MAGNETS = 256
 
